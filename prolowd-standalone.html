@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ProLOWD — Flyers in the Pros</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #dff0f8; }
+    input, textarea, select, button { font-family: Georgia, serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #dff0f8; }
+    ::-webkit-scrollbar-thumb { background: #3ab4dc; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect } = React;
+
+
+const STORAGE_KEY = "prolowd-players-v1";
+const TRANSACTIONS_KEY = "prolowd-transactions-v1";
+
+const DEFAULT_PLAYERS = [
+  {
+    id: 1,
+    name: "Obi Toppin",
+    team: "Indiana Pacers",
+    league: "NBA",
+    country: "USA",
+    position: "F",
+    udYears: "2018–2020",
+    notes: "Returned Feb 27 from foot surgery (right foot stress fracture, out since Oct 26). Back in bench role behind Siakam, who returned from elbow injury Mar 5. Averaging 12.0 PPG over last 10 games off bench per CBS. Logged 20 min in comeback start vs Nuggets when Siakam sat. Season averages across all appearances: 6.9 PPG / 4.4 RPG / 1.6 APG.",
+    stats: { pts: 6.9, reb: 4.4, ast: 1.6, gp: "", season: "2025–26" },
+    twitter: "obitoppin1",
+    active: true,
+  },
+  {
+    id: 2,
+    name: "Toumani Camara",
+    team: "Portland Trail Blazers",
+    league: "NBA",
+    country: "USA",
+    position: "F",
+    udYears: "2021–2023",
+    notes: "2025 All-Defensive team. Career-high 30 pts (6 threes) vs Raptors. Signed 4-year / $82M extension Oct 2025. Career-high 6 steals in 106–99 L vs Houston (Mar 7).",
+    stats: { pts: 12.9, reb: 5.3, ast: 2.6, gp: 64, season: "2025–26" },
+    twitter: "toomany_buckets",
+    active: true,
+  },
+  {
+    id: 3,
+    name: "DaRon Holmes II",
+    team: "Denver Nuggets",
+    league: "NBA",
+    country: "USA",
+    position: "C/F",
+    udYears: "2021–2024",
+    notes: "Torn Achilles July 2024; NBA debut Oct 25, 2025. Got extended run as starter for 5 games when both Jokic (knee) and Valanciunas (calf) were out — averaged 5.5 PPG / 3.0 APG in those starts. Back to bench/G League rotation since. G League (Grand Rapids Gold): 18.9 PPG / 6.4 RPG / 2.9 APG. Nuggets exercised 2026–27 rookie option.",
+    stats: { pts: 4.4, reb: 1.5, ast: 0.8, gp: 19, season: "2025–26" },
+    twitter: "DaRonHolmes22",
+    active: true,
+  },
+  {
+    id: 4,
+    name: "Koby Brea",
+    team: "Phoenix Suns / Valley Suns",
+    league: "NBA / G League",
+    country: "USA",
+    position: "G",
+    udYears: "2020–2024",
+    notes: "Mostly G League (two-way contract). Career high 30 pts vs Stockton Kings (Nov 20). Recent 29-pt game vs Stockton Kings. 5 NBA appearances.",
+    stats: { pts: 14.8, reb: 4.6, ast: 2.1, gp: 5, season: "2025–26" },
+    twitter: "KobyBrea",
+    active: true,
+  },
+  {
+    id: 5,
+    name: "Jalen Crutcher",
+    team: "Iowa Wolves",
+    league: "G League",
+    country: "USA",
+    position: "G",
+    udYears: "2017–2021",
+    notes: "Starting PG at Iowa after Jan trade from Osceola Magic. At Osceola: 11.8 PPG / 4.4 APG in 15 GP. Career back-to-back vs Rip City (Mar 4): 23 pts / 7 ast; (Mar 5): 24 pts / 6 reb / 6 ast. Career 2.7 AST/TO ratio.",
+    stats: { pts: 12.0, reb: 2.5, ast: 5.4, gp: 20, season: "2025–26 (combined)" },
+    twitter: "jalen_norose1",
+    active: true,
+  },
+  {
+    id: 6,
+    name: "Nate Santos",
+    team: "Iowa Wolves",
+    league: "G League",
+    country: "USA",
+    position: "F",
+    udYears: "2023–2025",
+    notes: "Three-point specialist; 7 threes vs Rip City Remix on Mar 4. Shot 27% from 3 in Feb.",
+    stats: { pts: 9.9, reb: 3.1, ast: 0.8, gp: 38, season: "2025–26" },
+    twitter: "",
+    active: true,
+  },
+  {
+    id: 7,
+    name: "Posh Alexander",
+    team: "BK Decin",
+    league: "Czech NBL",
+    country: "Czech Republic",
+    position: "PG",
+    udYears: "2024–2025",
+    notes: "2nd in Czech NBL in steals (2.1 SPG). Signed with Decin Oct 30, 2025 — first pro contract.",
+    stats: { pts: "", reb: "", ast: "", gp: "", season: "2025–26" },
+    twitter: "",
+    active: true,
+  },
+  {
+    id: 8,
+    name: "Dyshawn Pierre",
+    team: "UNICS Kazan",
+    league: "VTB United League",
+    country: "Russia",
+    position: "F",
+    udYears: "2011–2016",
+    notes: "3rd on team in scoring behind Reynolds and Bingham Jr. Joined Kazan Aug 2025 after 5 seasons with Fenerbahçe (2024-25 EuroLeague champion).",
+    stats: { pts: 12.9, reb: 6.4, ast: 2.0, gp: "", season: "2025–26" },
+    twitter: "dyshawnpierre",
+    active: true,
+  },
+  {
+    id: 9,
+    name: "Ryan Mikesell",
+    team: "MLP Academics Heidelberg",
+    league: "easyCredit BBL",
+    country: "Germany",
+    position: "F",
+    udYears: "2015–2020",
+    notes: "Returned to Heidelberg mid-season after stint with London Lions (5 SLB games: 8.0 PPG). Team leader in PTS (14.3), REB (5.9), and AST (4.0) in BBL. Also playing Basketball Champions League.",
+    stats: { pts: 14.3, reb: 5.9, ast: 4.0, gp: "", season: "2025–26 BBL" },
+    twitter: "mikesell33",
+    active: true,
+  },
+  {
+    id: 11,
+    name: "Ibi Watson",
+    team: "Bamberg Baskets",
+    league: "easyCredit BBL",
+    country: "Germany",
+    position: "G/F",
+    udYears: "2018–2022",
+    notes: "2nd on team in scoring behind Ronaldo Segu. Season high 28 pts vs Rasta Vechta (Jan 1). Led team in scoring Oct (18.7 PPG) and Nov (21.3 PPG).",
+    stats: { pts: 11.9, reb: 4.5, ast: 2.8, gp: 28, season: "2025–26 BBL" },
+    twitter: "ibi_watson_2",
+    active: true,
+  },
+  {
+    id: 17,
+    name: "Vincent 'Vee' Sanford",
+    team: "Fos Provence Basket",
+    league: "NM1",
+    country: "France",
+    position: "SG",
+    udYears: "2010–2014",
+    notes: "Signed with Fos Provence Basket (NM1 Poule Haute) in early March 2026. Debuted Mar 7 at Pays de Fougères in Fos's first Poule Haute game (W 87-70). Previously at AS Loon Plage this season: 16 PPG / 4.3 RPG / 3.4 APG in 25 games. Won NM1 Round 16 Player of the Week while at Loon Plage. Fos targets Pro B promotion. Betclic ELITE veteran (Antibes, Chalon, Limoges, Pau-Orthez 2017–2021). Career high: 42 pts in Iceland (2015).",
+    stats: { pts: 16.0, reb: 4.3, ast: 3.4, gp: 25, season: "2025–26 NM1" },
+    twitter: "VeeSanford",
+    active: true,
+  },
+  {
+    id: 16,
+    name: "Enoch Cheeks",
+    team: "Antwerp Giants",
+    league: "BNXT League",
+    country: "Belgium",
+    position: "G",
+    udYears: "2023–2025",
+    notes: "2025 undrafted — first year as a pro. BNXT League steals leader (2.3 SPG). Also playing FIBA Europe Cup with Antwerp (11.2 PPG / 5.5 RPG / 1.7 SPG in EC play). Season high: 33 pts / 14 reb vs. Kortrijk Spurs (Jan 16, 2026), career-highs in both. Named top scorer in the world that day. Transferred to UD from Robert Morris for final season.",
+    stats: { pts: 11.2, reb: 5.5, ast: 2.2, gp: "", season: "2025–26 FIBA Europe Cup" },
+    twitter: "EnochCheeks_",
+    active: true,
+  },
+  {
+    id: 15,
+    name: "Devin Oliver",
+    team: "Saitama Broncos",
+    league: "B3 League",
+    country: "Japan",
+    position: "PF",
+    udYears: "2010–2014",
+    notes: "2x Slovenian League champion & Finals MVP (2017, 2018) with Union Olimpija. Previously played B1 (Yokohama B-Corsairs) and B2 (Sendai 89ers) in Japan before returning for 2025-26 with Saitama in B3. Season stats not available in English-language databases.",
+    stats: { pts: "", reb: "", ast: "", gp: "", season: "2025–26 B3 League" },
+    twitter: "D_Oliver4",
+    active: true,
+  },
+  {
+    id: 14,
+    name: "Jordy Tshimanga",
+    team: "Taipei Taishin Mars",
+    league: "TPBL",
+    country: "Taiwan",
+    position: "C",
+    udYears: "2019–2021",
+    notes: "2nd in TPBL in rebounding (12.8 RPG per league leaders, 12.2 per recent game log). Transferred to UD from Nebraska. Previously played for Kaohsiung Steelers (P. League+, 2024-25: 15.8 PPG / 17.4 RPG) and Calgary Surge (CEBL).",
+    stats: { pts: 10.4, reb: 12.2, ast: "", gp: "", season: "2025–26 TPBL" },
+    twitter: "JordyTshimanga",
+    active: true,
+  },
+  {
+    id: 12,
+    name: "Josh Cunningham",
+    team: "Tangerang Hawks",
+    league: "IBL",
+    country: "Indonesia",
+    position: "PF",
+    udYears: "2015–2019",
+    notes: "Season opener: 15 pts / 12 reb double-double vs Satya Wacana (Jan 10). Feb 21 vs RANS Simba: 18 pts / 8 ast. Season averages not yet published by IBL.",
+    stats: { pts: "", reb: "", ast: "", gp: "", season: "2025–26 IBL" },
+    twitter: "joshmcunningham",
+    active: true,
+  },
+  {
+    id: 13,
+    name: "Jordan Sibert",
+    team: "UD Oliveirense",
+    league: "Liga Betclic",
+    country: "Portugal",
+    position: "SG",
+    udYears: "2013–2015",
+    notes: "First season in Portugal. Oct 11: season-high 26 pts in 104-93 W over FC Porto (Jornada 2). Also played for PAOK and Karditsas (Greece) the past two seasons. One NBA appearance: Atlanta Hawks (2018-19).",
+    stats: { pts: "", reb: "", ast: "", gp: "", season: "2025–26 Liga Betclic" },
+    twitter: "JordanSibert",
+    active: true,
+  },
+  {
+    id: 10,
+    name: "Chris Johnson",
+    team: "",
+    league: "",
+    country: "",
+    position: "SF",
+    udYears: "2008–2012",
+    notes: "Signed with Élan Chalon (Betclic ELITE) July 2025, but released Sept 17, 2025 before playing a game — medical examination revealed a health issue incompatible with professional play in France. Currently a free agent. Last stats: Hapoel Jerusalem 2024–25: 7.9 PPG / 5.2 RPG. NIT championship MVP at UD (2010).",
+    stats: { pts: 7.9, reb: 5.2, ast: "", gp: 21, season: "2024–25 (Israel)" },
+    twitter: "cmj_4",
+    active: false,
+  },
+  {
+    id: 20,
+    name: "Scoochie Smith",
+    team: "Manisa Basket",
+    league: "BSL",
+    country: "Turkey",
+    position: "PG",
+    udYears: "2013–2017",
+    notes: "Monthly scoring leaders: Sep 11.0 PPG, Oct (team: Mintz), Nov (team: Mintz) but Smith had season-high 20 pts vs Pinar Karsiyaka (Nov 15). Dec team leader: 12.33 PPG / 5.0 APG. Season-high 9 ast vs Mersin (Jan). First-team All-A10 senior at UD. TBT Red Scare regular.",
+    stats: { pts: 12.33, reb: "", ast: 5.0, gp: "", season: "2025–26" },
+    twitter: "ScoochieSmith",
+    active: true,
+  },
+  {
+    id: 19,
+    name: "Darrell Davis",
+    team: "BC Cherno More Ticha",
+    league: "Bulgarian NBL",
+    country: "Bulgaria",
+    position: "SG",
+    udYears: "2014–2018",
+    notes: "1,000-point scorer at UD. Signed with Cherno More Ticha (Varna) Mar 2026, arriving from Malvin Montevideo (Uruguay LUB). Has played professionally in 13+ countries.",
+    stats: { pts: "", reb: "", ast: "", gp: "", season: "2025–26" },
+    twitter: "",
+    active: true,
+  },
+  {
+    id: 21,
+    name: "Rodney Chatman",
+    team: "Sheffield Sharks",
+    league: "SLB",
+    country: "UK",
+    position: "G",
+    udYears: "2019–2021",
+    notes: "SLB Player of the Month (Nov 2025): 20.0 PPG / 7.0 RPG / 5.3 APG that month. Season highs: 35 pts vs Manchester Giants, 14 ast vs Newcastle Eagles. Part of 29-2 Dayton squad 2019–20; famous for holding Anthony Edwards to 6 pts. Re-signed Aug 2025 after knee injury ended his 2024–25 debut (18 PPG, 5.1 RPG in 12 games).",
+    stats: { pts: 13.2, reb: 3.2, ast: 4.7, gp: 24, season: "2025–26" },
+    twitter: "RodneyC_",
+    active: true,
+  },
+  {
+    id: 22,
+    name: "Zed Key",
+    team: "BK KVIS Pardubice",
+    league: "Czech NBL",
+    country: "Czech Republic",
+    position: "PF/C",
+    udYears: "2024–2025",
+    notes: "Czech NBL blocks leader (1.2 BPG). Career high: 24 pts / 10 reb vs Olomoucko (Nov 12). First pro contract after going undrafted in 2025. Transfer from Ohio State (4 seasons) to Dayton for senior year.",
+    stats: { pts: 13.2, reb: 5.5, ast: "", gp: "", season: "2025–26" },
+    twitter: "",
+    active: true,
+  },
+  {
+    id: 23,
+    name: "Kostas Antetokounmpo",
+    team: "Aris Thessaloniki",
+    league: "GBL",
+    country: "Greece",
+    position: "F/C",
+    udYears: "2016–2018",
+    notes: "On loan at Aris Thessaloniki (GBL / EuroCup) from Olympiacos (Jan 9, 2026). Loaned to provide more playing time after Tyrique Jones arrival at Olympiacos. Also playing EuroCup. NBA champion with Lakers (2020). Drafted 60th overall (76ers, 2018). Won EuroBasket 2025 bronze medal with Greece. Brother of Giannis, Thanasis & Alex Antetokounmpo.",
+    stats: { pts: 3.6, reb: 3.0, ast: "", gp: 5, season: "2025–26 EuroCup" },
+    twitter: "Kostasante13",
+    active: true,
+  },
+  {
+    id: 24,
+    name: "Zimi Nwokeji",
+    team: "Rotterdam City Basketball",
+    league: "BNXT League",
+    country: "Netherlands",
+    position: "F",
+    udYears: "2020–2024",
+    notes: "Listed among top players at Rotterdam City Basketball (formerly Feyenoord Basketball) for 2025–26. First pro contract. The last player remaining from UD's 29-2 squad during his senior year — he redshirted that season and witnessed it from the bench. Transferred to Jacksonville for 2024–25 before signing with Rotterdam.",
+    stats: { pts: "", reb: "", ast: "", gp: "", season: "2025–26" },
+    twitter: "",
+    active: true,
+  },
+  {
+    id: 25,
+    name: "Trey Landers",
+    team: "",
+    league: "",
+    country: "",
+    position: "G/F",
+    udYears: "2016–2020",
+    notes: "Key member of Dayton's legendary 29-2 team in 2019–20. Third Team All-A10. Called the 'glue' of the team by Anthony Grant. Last confirmed team: Cleveland Charge (G League, Jan 2022). No 2025–26 team confirmed.",
+    stats: { pts: "", reb: "", ast: "", gp: "", season: "" },
+    twitter: "TreyLanders3",
+    active: false,
+  },
+];
+
+const DEFAULT_TRANSACTIONS = [
+  { id: 33, date: "2025-06-23", player: "Zimi Nwokeji", type: "Signing", detail: "Signed with Rotterdam City Basketball (BNXT League, Netherlands) — first professional contract. Transferred from UD to Jacksonville for 2024–25 before signing with Rotterdam." },
+  { id: 31, date: "2025-07-10", player: "Kostas Antetokounmpo", type: "Signing", detail: "Signed two-year contract with Olympiacos (GBL / EuroLeague)." },
+  { id: 32, date: "2026-01-09", player: "Kostas Antetokounmpo", type: "Other", detail: "Loaned to Aris Thessaloniki (GBL / EuroCup) by Olympiacos for remainder of 2025–26 season." },
+  { id: 30, date: "2025-06-27", player: "Zed Key", type: "Signing", detail: "Signed first pro contract with BK KVIS Pardubice (Czech NBL). Went undrafted in 2025 NBA Draft out of Dayton." },
+  { id: 29, date: "2025-08-05", player: "Rodney Chatman", type: "Signing", detail: "Re-signed with Sheffield Sharks (SLB) for 2025–26. Returned after knee ligament injury ended his 2024–25 debut season (18 PPG, 5.1 RPG, 5.8 APG in 12 games). Won SLB Cup with Sharks in 2024–25." },
+  { id: 27, date: "2025-07-01", player: "Scoochie Smith", type: "Signing", detail: "Signed with Manisa Basket (BSL, Turkey) for 2025–26. Arrived from KK Vojvodina Novi Sad (Serbian KLS/ABA League), where he earned All-ABA League 2 Honorable Mention." },
+  { id: 1, date: "2025-07-13", player: "DaRon Holmes II", type: "Injury", detail: "Torn right Achilles in NBA Summer League debut vs LAL; expected to miss 2024–25 season" },
+  { id: 2, date: "2025-06-27", player: "Koby Brea", type: "Draft", detail: "Selected 41st overall by Golden State Warriors, traded to Phoenix Suns" },
+  { id: 3, date: "2025-07-09", player: "Nate Santos", type: "Signing", detail: "Signed with Minnesota Timberwolves organization; assigned to Iowa Wolves (G League affiliate)" },
+  { id: 7, date: "2026-01-01", player: "Jalen Crutcher", type: "Trade", detail: "Acquired by Iowa Wolves from Osceola Magic in 3-team deal with South Bay Lakers; Iowa sent 2026 1st-round G League pick to South Bay" },
+  { id: 4, date: "2026-02-27", player: "Obi Toppin", type: "Return", detail: "Returned from foot injury; 3 pts / 8 min in loss to Charlotte Hornets" },
+  { id: 37, date: "2026-03-07", player: "Toumani Camara", type: "Game", detail: "Career-high 6 steals in 106–99 L vs Houston Rockets; also added 16 pts (4 threes) and 6 reb in 39 min." },
+  { id: 38, date: "2026-02-28", player: "Rodney Chatman", type: "Other", detail: "2025–26 season stats through 24 GP: 13.2 PPG / 3.2 RPG / 4.7 APG on 40.6% FG. Won SLB Player of Month in November." },
+  { id: 36, date: "2026-03-02", player: "Obi Toppin", type: "Game", detail: "2nd start of season vs Nuggets (Siakam out, elbow): 34 pts / 10 reb / 2 ast — one of the best games of his NBA career per CBS Sports. Pacers won." },
+  { id: 5, date: "2026-02-22", player: "Toumani Camara", type: "Game", detail: "12 pts in 92–77 W over Phoenix Suns (also vs Koby Brea)" },
+  { id: 6, date: "2026-02-24", player: "DaRon Holmes II", type: "Game", detail: "9 pts in 7 min, Denver 157–103 over Portland Trail Blazers" },
+  { id: 8, date: "2026-03-04", player: "Nate Santos", type: "Game", detail: "22 pts on 7 3-pointers in Iowa's 136–117 W over Rip City Remix" },
+  { id: 9, date: "2026-03-04", player: "Jalen Crutcher", type: "Game", detail: "23 pts and 7 ast in Iowa's 136–117 W over Rip City Remix" },
+  { id: 26, date: "2026-03-01", player: "Darrell Davis", type: "Signing", detail: "Signed with BC Cherno More Ticha (Bulgarian NBL, Varna). Arrived from Malvin Montevideo (Uruguay LUB). Has played in 13+ countries across his pro career." },
+  { id: 34, date: "2025-07-18", player: "Chris Johnson", type: "Signing", detail: "Signed with Élan Chalon (Betclic ELITE, France) for 2025–26 season." },
+  { id: 35, date: "2025-09-17", player: "Chris Johnson", type: "Release", detail: "Released by Élan Chalon before playing a single game — mandatory medical exam revealed a health issue deemed incompatible with professional basketball in France. Currently a free agent." },
+  { id: 10, date: "2025-07-01", player: "Ryan Mikesell", type: "Signing", detail: "Signed with London Lions (British SLB) for 2025–26." },
+  { id: 13, date: "2026-01-01", player: "Ryan Mikesell", type: "Signing", detail: "Left London Lions; returned to MLP Academics Heidelberg (easyCredit BBL). Now team leader in PTS (14.3), REB (5.9), and AST (4.0). Also playing Basketball Champions League." },
+  { id: 11, date: "2025-07-01", player: "Ibi Watson", type: "Signing", detail: "Re-signed with Bamberg Baskets (easyCredit BBL) for 2025–26 season." },
+  { id: 12, date: "2026-01-01", player: "Ibi Watson", type: "Game", detail: "Season-high 28 pts in Bamberg's home W over Rasta Vechta (96-86)." },
+  { id: 14, date: "2026-01-01", player: "Josh Cunningham", type: "Signing", detail: "Signed with Tangerang Hawks for IBL 2026 season in Indonesia." },
+  { id: 15, date: "2026-01-10", player: "Josh Cunningham", type: "Game", detail: "Season opener: 15 pts / 12 reb double-double in 85–59 W over Satya Wacana." },
+  { id: 28, date: "2026-03-07", player: "Vincent Sanford", type: "Signing", detail: "Signed with Fos Provence Basket (NM1 Poule Haute). Debuted Mar 7 at Pays de Fougères — Fos won 87-70 in Poule Haute opener. Team targeting Pro B promotion." },
+  { id: 23, date: "2025-08-01", player: "Vincent Sanford", type: "Signing", detail: "Signed with AS Loon Plage (NM1, France) — first stint in France's 3rd division after years in Betclic ELITE (Antibes, Chalon, Limoges, Pau-Orthez)." },
+  { id: 24, date: "2025-12-01", player: "Vincent Sanford", type: "Game", detail: "Season-high 26 pts in derby win vs. Berck (December 2025, NM1)." },
+  { id: 25, date: "2026-02-01", player: "Vincent Sanford", type: "Release", detail: "Departed AS Loon Plage after 25 games (16 PPG / 4.3 RPG / 3.4 APG, 15.4 eval) to pursue new opportunity. Had helped club qualify for Groupe A (Poule Haute)." },
+  { id: 21, date: "2025-07-01", player: "Enoch Cheeks", type: "Signing", detail: "Signed with Antwerp Giants (BNXT League, Belgium) — first professional contract after going undrafted in 2025 out of Dayton." },
+  { id: 22, date: "2026-01-16", player: "Enoch Cheeks", type: "Game", detail: "Career-high 33 pts / 14 reb in Antwerp's road loss to Kortrijk Spurs 102-93 (BNXT League). Also had 5 steals and 2 blocks." },
+  { id: 20, date: "2025-08-01", player: "Devin Oliver", type: "Signing", detail: "Signed with Saitama Broncos (B3 League, Japan) after departing SLUC Nancy (Betclic ÉLITE, France). Returns to Japan where he previously played B1 with Yokohama B-Corsairs and B2 with Sendai 89ers." },
+  { id: 19, date: "2025-08-14", player: "Jordy Tshimanga", type: "Signing", detail: "Signed with Taipei Taishin Mars (TPBL, Taiwan) for 2025-26 season. Previously with Kaohsiung Steelers (P. League+) where he averaged 15.8 PPG / 17.4 RPG." },
+  { id: 17, date: "2025-09-08", player: "Jordan Sibert", type: "Signing", detail: "Signed with UD Oliveirense (Portugal, Liga Betclic) — first stint in Portugal after two seasons in Greece (PAOK, Karditsas)." },
+  { id: 18, date: "2025-10-11", player: "Jordan Sibert", type: "Game", detail: "Season-high 26 pts (team-high) in 104-93 W over FC Porto, Jornada 2 of Liga Betclic." },
+];
+
+const LEAGUE_COLORS = {
+  "NBA": "#1d428a",
+  "G League": "#c8102e",
+  "NBA / G League": "#6a2c8e",
+  "EuroLeague": "#ff6600",
+  "NM1": "#003f8a",
+  "BNXT League": "#f57c00",
+  "B3 League": "#2e7d32",
+  "TPBL": "#c00",
+  "Liga Betclic": "#009b3a",
+  "IBL": "#e65c00",
+  "easyCredit BBL": "#e8001d",
+  "Betclic ELITE": "#003082",
+  "VTB United League": "#cc0000",
+  "British SLB": "#012169",
+  "SLB": "#002d72",
+  "GBL": "#0057a8",
+  "Czech NBL": "#d7141a",
+  "Bulgarian NBL": "#006db3",
+  "BSL": "#e30a17",
+  "default": "#4a5568",
+};
+
+const TRANSACTION_COLORS = {
+  "Draft": "#16a34a",
+  "Signing": "#2563eb",
+  "Trade": "#d97706",
+  "Release": "#dc2626",
+  "Injury": "#9333ea",
+  "Return": "#0891b2",
+  "Game": "#2a5070",
+  "Other": "#6b7280",
+};
+
+function leagueColor(league) {
+  return LEAGUE_COLORS[league] || LEAGUE_COLORS["default"];
+}
+
+function txColor(type) {
+  return TRANSACTION_COLORS[type] || TRANSACTION_COLORS["Other"];
+}
+
+function ProLOWD() {
+  const [players, setPlayers] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [view, setView] = useState("roster"); // roster | transactions | player
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filterLeague, setFilterLeague] = useState("All");
+  const [editingPlayer, setEditingPlayer] = useState(null);
+  const [editingTx, setEditingTx] = useState(null);
+  const [showAddTx, setShowAddTx] = useState(false);
+  const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const [newTx, setNewTx] = useState({ date: "", player: "", type: "Signing", detail: "" });
+  const [newPlayer, setNewPlayer] = useState({ name: "", team: "", league: "NBA", country: "USA", position: "", udYears: "", notes: "", twitter: "", stats: { pts: "", reb: "", ast: "", gp: "", season: "2025–26" } });
+  const [saveMsg, setSaveMsg] = useState("");
+
+  // Load from storage
+  useEffect(() => {
+    try {
+      const p = localStorage.getItem(STORAGE_KEY);
+      setPlayers(p ? JSON.parse(p) : DEFAULT_PLAYERS);
+    } catch {
+      setPlayers(DEFAULT_PLAYERS);
+    }
+    try {
+      const t = localStorage.getItem(TRANSACTIONS_KEY);
+      setTransactions(t ? JSON.parse(t) : DEFAULT_TRANSACTIONS);
+    } catch {
+      setTransactions(DEFAULT_TRANSACTIONS);
+    }
+  }, []);
+
+  function savePlayers(updated) {
+    setPlayers(updated);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+  }
+
+  function saveTransactions(updated) {
+    setTransactions(updated);
+    try { localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updated)); } catch {}
+  }
+
+  function flash(msg) {
+    setSaveMsg(msg);
+    setTimeout(() => setSaveMsg(""), 2000);
+  }
+
+  const leagues = ["All", ...Array.from(new Set(players.map(p => p.league)))];
+
+  const filteredPlayers = players.filter(p => {
+    const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.team.toLowerCase().includes(search.toLowerCase());
+    const matchLeague = filterLeague === "All" || p.league === filterLeague;
+    return matchSearch && matchLeague && p.active;
+  });
+
+  function openPlayer(player) {
+    setSelectedPlayer(player);
+    setEditingPlayer(null);
+    setView("player");
+  }
+
+  function savePlayerEdit(updated) {
+    const newList = players.map(p => p.id === updated.id ? updated : p);
+    savePlayers(newList);
+    setSelectedPlayer(updated);
+    setEditingPlayer(null);
+    flash("Saved ✓");
+  }
+
+  function addTransaction() {
+    if (!newTx.player || !newTx.detail || !newTx.date) return;
+    const tx = { ...newTx, id: Date.now() };
+    const updated = [tx, ...transactions];
+    saveTransactions(updated);
+    setNewTx({ date: "", player: "", type: "Signing", detail: "" });
+    setShowAddTx(false);
+    flash("Transaction added ✓");
+  }
+
+  function deleteTx(id) {
+    saveTransactions(transactions.filter(t => t.id !== id));
+    flash("Deleted");
+  }
+
+  function addPlayer() {
+    if (!newPlayer.name || !newPlayer.team) return;
+    const p = { ...newPlayer, id: Date.now(), active: true, stats: { ...newPlayer.stats } };
+    savePlayers([...players, p]);
+    setNewPlayer({ name: "", team: "", league: "NBA", country: "USA", position: "", udYears: "", notes: "", twitter: "", stats: { pts: "", reb: "", ast: "", gp: "", season: "2025–26" } });
+    setShowAddPlayer(false);
+    flash("Player added ✓");
+  }
+
+  const playerTxs = selectedPlayer ? transactions.filter(t => t.player === selectedPlayer.name).sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
+
+  return (
+    <div style={{ fontFamily: "'Georgia', serif", background: "#ffffff", minHeight: "100vh", color: "#0d1b2a" }}>
+      {/* Header */}
+      <div style={{ background: "linear-gradient(135deg, #3ab4dc 0%, #5bc8f5 50%, #3ab4dc 100%)", borderBottom: "2px solid #cc2229", padding: "20px 24px 16px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.5px", color: "#cc2229" }}>@ProLOWD</div>
+            <div style={{ fontSize: 13, color: "#2a6080", fontStyle: "italic", marginTop: 2 }}>Professionally LOWD · Flyers in the Pros</div>
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            {["roster", "transactions"].map(v => (
+              <button key={v} onClick={() => setView(v)} style={{
+                background: view === v ? "#cc2229" : "transparent",
+                color: view === v ? "#ffffff" : "#cc2229",
+                border: "1px solid #cc2229",
+                borderRadius: 4,
+                padding: "6px 18px",
+                fontFamily: "Georgia, serif",
+                fontSize: 13,
+                fontWeight: view === v ? 700 : 400,
+                cursor: "pointer",
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+              }}>
+                {v === "roster" ? "📋 Roster" : "🔁 Transactions"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {saveMsg && (
+        <div style={{ position: "fixed", top: 16, right: 16, background: "#16a34a", color: "#fff", padding: "8px 18px", borderRadius: 6, fontFamily: "Georgia, serif", fontSize: 13, zIndex: 999, boxShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+          {saveMsg}
+        </div>
+      )}
+
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 16px" }}>
+
+        {/* ROSTER VIEW */}
+        {view === "roster" && (
+          <>
+            <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                placeholder="Search player or team…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ flex: 1, minWidth: 180, background: "#f0f8fc", border: "1px solid #2d3a4e", borderRadius: 4, padding: "8px 12px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 14 }}
+              />
+              <select value={filterLeague} onChange={e => setFilterLeague(e.target.value)} style={{ background: "#f0f8fc", border: "1px solid #2d3a4e", borderRadius: 4, padding: "8px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 13 }}>
+                {leagues.map(l => <option key={l}>{l}</option>)}
+              </select>
+              <button onClick={() => setShowAddPlayer(true)} style={{ background: "#cc2229", color: "#ffffff", border: "none", borderRadius: 4, padding: "8px 16px", fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                + Add Player
+              </button>
+            </div>
+
+            {showAddPlayer && (
+              <div style={{ background: "#f0f8fc", border: "1px solid #cc2229", borderRadius: 8, padding: 20, marginBottom: 20 }}>
+                <div style={{ fontWeight: 700, color: "#cc2229", marginBottom: 12, fontSize: 15 }}>Add New Player</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {[["name","Name*"],["team","Team*"],["league","League"],["country","Country"],["position","Position"],["udYears","UD Years"],["twitter","Twitter handle"]].map(([field, label]) => (
+                    <input key={field} placeholder={label} value={newPlayer[field] || ""} onChange={e => setNewPlayer(p => ({ ...p, [field]: e.target.value }))}
+                      style={{ background: "#e0f2fa", border: "1px solid #2d3a4e", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 13 }} />
+                  ))}
+                </div>
+                <textarea placeholder="Notes" value={newPlayer.notes} onChange={e => setNewPlayer(p => ({ ...p, notes: e.target.value }))}
+                  style={{ width: "100%", marginTop: 10, background: "#e0f2fa", border: "1px solid #2d3a4e", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 13, resize: "vertical", boxSizing: "border-box" }} rows={2} />
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <button onClick={addPlayer} style={{ background: "#cc2229", color: "#ffffff", border: "none", borderRadius: 4, padding: "7px 18px", fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Save</button>
+                  <button onClick={() => setShowAddPlayer(false)} style={{ background: "transparent", color: "#2a6080", border: "1px solid #2d3a4e", borderRadius: 4, padding: "7px 14px", fontFamily: "Georgia, serif", fontSize: 13, cursor: "pointer" }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "grid", gap: 10 }}>
+              {filteredPlayers.length === 0 && <div style={{ color: "#2a6080", textAlign: "center", padding: 40 }}>No players found.</div>}
+              {filteredPlayers.map(player => (
+                <div key={player.id} onClick={() => openPlayer(player)} style={{ background: "#f0f8fc", border: "1px solid #1e2d40", borderRadius: 8, padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 16, transition: "border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "#cc2229"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = "#a8daf0"}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 700, fontSize: 16, color: "#0d1b2a" }}>{player.name}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, background: leagueColor(player.league), color: "#fff", borderRadius: 3, padding: "2px 7px", letterSpacing: "0.3px" }}>{player.league}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: "#1a4a6a" }}>{player.team} · {player.position} · UD {player.udYears}</div>
+                    {player.notes && <div style={{ fontSize: 12, color: "#3a6888", marginTop: 4, fontStyle: "italic" }}>{player.notes}</div>}
+                  </div>
+                  <div style={{ textAlign: "right", minWidth: 80 }}>
+                    {player.stats?.pts !== "" && <div style={{ fontSize: 20, fontWeight: 700, color: "#cc2229" }}>{player.stats.pts}</div>}
+                    {player.stats?.pts !== "" && <div style={{ fontSize: 11, color: "#4a7898" }}>PPG</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* TRANSACTIONS VIEW */}
+        {view === "transactions" && (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ color: "#1a4a6a", fontSize: 14 }}>{transactions.length} transaction{transactions.length !== 1 ? "s" : ""} logged</div>
+              <button onClick={() => setShowAddTx(true)} style={{ background: "#cc2229", color: "#ffffff", border: "none", borderRadius: 4, padding: "8px 16px", fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                + Log Transaction
+              </button>
+            </div>
+
+            {showAddTx && (
+              <div style={{ background: "#f0f8fc", border: "1px solid #cc2229", borderRadius: 8, padding: 20, marginBottom: 20 }}>
+                <div style={{ fontWeight: 700, color: "#cc2229", marginBottom: 12, fontSize: 15 }}>Log Transaction / Note</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <input type="date" value={newTx.date} onChange={e => setNewTx(t => ({ ...t, date: e.target.value }))}
+                    style={{ background: "#e0f2fa", border: "1px solid #2d3a4e", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 13 }} />
+                  <input placeholder="Player name" value={newTx.player} onChange={e => setNewTx(t => ({ ...t, player: e.target.value }))}
+                    list="player-names"
+                    style={{ background: "#e0f2fa", border: "1px solid #2d3a4e", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 13 }} />
+                  <datalist id="player-names">{players.map(p => <option key={p.id} value={p.name} />)}</datalist>
+                  <select value={newTx.type} onChange={e => setNewTx(t => ({ ...t, type: e.target.value }))}
+                    style={{ background: "#e0f2fa", border: "1px solid #2d3a4e", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 13 }}>
+                    {Object.keys(TRANSACTION_COLORS).map(k => <option key={k}>{k}</option>)}
+                  </select>
+                </div>
+                <textarea placeholder="Details…" value={newTx.detail} onChange={e => setNewTx(t => ({ ...t, detail: e.target.value }))}
+                  style={{ width: "100%", background: "#e0f2fa", border: "1px solid #2d3a4e", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 13, resize: "vertical", boxSizing: "border-box" }} rows={2} />
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <button onClick={addTransaction} style={{ background: "#cc2229", color: "#ffffff", border: "none", borderRadius: 4, padding: "7px 18px", fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Save</button>
+                  <button onClick={() => setShowAddTx(false)} style={{ background: "transparent", color: "#2a6080", border: "1px solid #2d3a4e", borderRadius: 4, padding: "7px 14px", fontFamily: "Georgia, serif", fontSize: 13, cursor: "pointer" }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "grid", gap: 8 }}>
+              {[...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).map(tx => (
+                <div key={tx.id} style={{ background: "#f0f8fc", border: "1px solid #1e2d40", borderRadius: 8, padding: "12px 16px", display: "flex", gap: 14, alignItems: "flex-start" }}>
+                  <div style={{ minWidth: 8, width: 8, height: 8, borderRadius: "50%", background: txColor(tx.type), marginTop: 6, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 3 }}>
+                      <span style={{ fontWeight: 700, fontSize: 14, color: "#0d1b2a" }}>{tx.player}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, background: txColor(tx.type), color: "#fff", borderRadius: 3, padding: "2px 7px" }}>{tx.type}</span>
+                      <span style={{ fontSize: 12, color: "#4a7898", marginLeft: "auto" }}>{tx.date}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: "#1a4a6a" }}>{tx.detail}</div>
+                  </div>
+                  <button onClick={() => deleteTx(tx.id)} style={{ background: "transparent", border: "none", color: "#4a5a6a", cursor: "pointer", fontSize: 16, padding: "0 4px", lineHeight: 1 }} title="Delete">×</button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* PLAYER DETAIL VIEW */}
+        {view === "player" && selectedPlayer && (
+          <>
+            <button onClick={() => { setView("roster"); setEditingPlayer(null); }} style={{ background: "transparent", border: "none", color: "#cc2229", fontFamily: "Georgia, serif", fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 16 }}>
+              ← Back to Roster
+            </button>
+
+            {editingPlayer ? (
+              <PlayerEditForm player={editingPlayer} onSave={savePlayerEdit} onCancel={() => setEditingPlayer(null)} />
+            ) : (
+              <div>
+                <div style={{ background: "#f0f8fc", border: "1px solid #2d3a4e", borderRadius: 10, padding: 24, marginBottom: 20 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                    <div>
+                      <div style={{ fontSize: 26, fontWeight: 700, color: "#0d1b2a", marginBottom: 4 }}>{selectedPlayer.name}</div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, background: leagueColor(selectedPlayer.league), color: "#fff", borderRadius: 3, padding: "2px 8px" }}>{selectedPlayer.league}</span>
+                        <span style={{ fontSize: 13, color: "#1a4a6a" }}>{selectedPlayer.team}</span>
+                        <span style={{ fontSize: 13, color: "#4a7898" }}>· {selectedPlayer.position}</span>
+                      </div>
+                      <div style={{ fontSize: 13, color: "#4a7898", marginTop: 6 }}>UD {selectedPlayer.udYears} · {selectedPlayer.country}</div>
+                      {selectedPlayer.twitter && (
+                        <div style={{ fontSize: 12, color: "#4a9eff", marginTop: 4 }}>@{selectedPlayer.twitter}</div>
+                      )}
+                    </div>
+                    <button onClick={() => setEditingPlayer({ ...selectedPlayer })} style={{ background: "transparent", border: "1px solid #cc2229", color: "#cc2229", borderRadius: 4, padding: "6px 14px", fontFamily: "Georgia, serif", fontSize: 12, cursor: "pointer" }}>
+                      ✏ Edit
+                    </button>
+                  </div>
+
+                  {/* Stats */}
+                  <div style={{ display: "flex", gap: 16, marginBottom: selectedPlayer.notes ? 16 : 0, flexWrap: "wrap" }}>
+                    {[["pts", "PPG"], ["reb", "RPG"], ["ast", "APG"], ["gp", "GP"]].map(([field, label]) => (
+                      selectedPlayer.stats?.[field] !== "" && selectedPlayer.stats?.[field] !== undefined ? (
+                        <div key={field} style={{ background: "#3ab4dc", borderRadius: 6, padding: "12px 20px", textAlign: "center", minWidth: 70 }}>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: "#cc2229" }}>{selectedPlayer.stats[field]}</div>
+                          <div style={{ fontSize: 11, color: "#4a7898", letterSpacing: "0.5px" }}>{label}</div>
+                        </div>
+                      ) : null
+                    ))}
+                    {selectedPlayer.stats?.season && <div style={{ fontSize: 11, color: "#3a4a5a", alignSelf: "flex-end", marginBottom: 6 }}>{selectedPlayer.stats.season}</div>}
+                  </div>
+
+                  {selectedPlayer.notes && (
+                    <div style={{ background: "#dff5ff", borderRadius: 6, padding: "10px 14px", fontSize: 13, color: "#1a4060", fontStyle: "italic", borderLeft: "3px solid #cc2229" }}>
+                      {selectedPlayer.notes}
+                    </div>
+                  )}
+                </div>
+
+                {/* Player Transactions */}
+                <div style={{ fontWeight: 700, color: "#cc2229", fontSize: 14, marginBottom: 10, letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                  Transaction Log
+                </div>
+                {playerTxs.length === 0 ? (
+                  <div style={{ color: "#4a5a6a", fontSize: 13, fontStyle: "italic" }}>No transactions logged yet.</div>
+                ) : (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {playerTxs.map(tx => (
+                      <div key={tx.id} style={{ background: "#f0f8fc", border: "1px solid #1e2d40", borderRadius: 8, padding: "10px 14px", display: "flex", gap: 12 }}>
+                        <div style={{ minWidth: 8, width: 8, height: 8, borderRadius: "50%", background: txColor(tx.type), marginTop: 5, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 3 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, background: txColor(tx.type), color: "#fff", borderRadius: 3, padding: "2px 7px" }}>{tx.type}</span>
+                            <span style={{ fontSize: 12, color: "#4a7898" }}>{tx.date}</span>
+                          </div>
+                          <div style={{ fontSize: 13, color: "#1a4a6a" }}>{tx.detail}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button onClick={() => { setShowAddTx(true); setNewTx(t => ({ ...t, player: selectedPlayer.name })); setView("transactions"); }}
+                  style={{ marginTop: 16, background: "transparent", border: "1px solid #cc2229", color: "#cc2229", borderRadius: 4, padding: "7px 16px", fontFamily: "Georgia, serif", fontSize: 13, cursor: "pointer" }}>
+                  + Log Transaction for {selectedPlayer.name}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PlayerEditForm({ player, onSave, onCancel }) {
+  const [form, setForm] = useState({ ...player, stats: { ...player.stats } });
+
+  function field(key, label, type = "text") {
+    return (
+      <div key={key} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <label style={{ fontSize: 11, color: "#4a7898", letterSpacing: "0.5px", textTransform: "uppercase" }}>{label}</label>
+        <input type={type} value={form[key] || ""} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+          style={{ background: "#e0f2fa", border: "1px solid #7ac8e8", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 14 }} />
+      </div>
+    );
+  }
+
+  function statField(key, label) {
+    return (
+      <div key={key} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <label style={{ fontSize: 11, color: "#4a7898", letterSpacing: "0.5px", textTransform: "uppercase" }}>{label}</label>
+        <input value={form.stats[key] || ""} onChange={e => setForm(f => ({ ...f, stats: { ...f.stats, [key]: e.target.value } }))}
+          style={{ background: "#e0f2fa", border: "1px solid #7ac8e8", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 14 }} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: "#f0f8fc", border: "1px solid #cc2229", borderRadius: 10, padding: 24 }}>
+      <div style={{ fontWeight: 700, color: "#cc2229", fontSize: 16, marginBottom: 18 }}>Editing: {player.name}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+        {field("name", "Name")}
+        {field("team", "Current Team")}
+        {field("league", "League")}
+        {field("country", "Country")}
+        {field("position", "Position")}
+        {field("udYears", "UD Years")}
+        {field("twitter", "Twitter Handle")}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 14 }}>
+        {statField("pts", "PPG")}
+        {statField("reb", "RPG")}
+        {statField("ast", "APG")}
+        {statField("gp", "GP")}
+        {statField("season", "Season")}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 18 }}>
+        <label style={{ fontSize: 11, color: "#4a7898", letterSpacing: "0.5px", textTransform: "uppercase" }}>Notes</label>
+        <textarea value={form.notes || ""} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3}
+          style={{ background: "#e0f2fa", border: "1px solid #7ac8e8", borderRadius: 4, padding: "7px 10px", color: "#0d1b2a", fontFamily: "Georgia, serif", fontSize: 14, resize: "vertical" }} />
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={() => onSave(form)} style={{ background: "#cc2229", color: "#ffffff", border: "none", borderRadius: 4, padding: "8px 22px", fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Save Changes</button>
+        <button onClick={onCancel} style={{ background: "transparent", border: "1px solid #2d3a4e", color: "#2a6080", borderRadius: 4, padding: "8px 16px", fontFamily: "Georgia, serif", fontSize: 14, cursor: "pointer" }}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<ProLOWD />);
+
+  </script>
+</body>
+</html>
