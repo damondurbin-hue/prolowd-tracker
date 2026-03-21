@@ -17201,9 +17201,10 @@ window.React = _require('react');
 window.ReactDOM = _require('react-dom/client');
 
 })(window);
+
 // ---- APP ----
-const STORAGE_KEY = "prolowd-players-v2";
-const TRANSACTIONS_KEY = "prolowd-transactions-v2";
+const STORAGE_KEY = "prolowd-players-v3";
+const TRANSACTIONS_KEY = "prolowd-transactions-v3";
 const DEFAULT_PLAYERS = [
     {
         id: 1,
@@ -17762,7 +17763,10 @@ function ProLOWD() {
                             React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", marginBottom: 3 } },
                                 React.createElement("span", { style: { fontSize: 11, fontWeight: 700, background: txColor(tx.type), color: "#fff", borderRadius: 3, padding: "2px 7px" } }, tx.type),
                                 React.createElement("span", { style: { fontSize: 12, color: "#4a7898" } }, tx.date)),
-                            React.createElement("div", { style: { fontSize: 13, color: "#1a4a6a" } }, tx.detail)))))),}
+                            React.createElement("div", { style: { fontSize: 13, color: "#1a4a6a" } }, tx.detail)))))))),
+                ")}")))));
+}
+
 
 // Mount the app
 const rootEl = document.getElementById('root');
